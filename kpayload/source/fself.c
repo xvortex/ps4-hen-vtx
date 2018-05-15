@@ -316,11 +316,9 @@ PAYLOAD_CODE int my_sceSblAuthMgrVerifyHeader(struct self_context* ctx)
 
 PAYLOAD_CODE int my_sceSblAuthMgrSmLoadSelfSegment__sceSblServiceMailbox(unsigned long service_id, uint8_t* request, void* response)
 {
-  /* getting a stack frame of a parent function */
-  uint8_t* frame = (uint8_t*)__builtin_frame_address(1);
-  /* finding a pointer to a context's structure */
-  struct self_context* ctx = *(struct self_context**)(frame - 0x100);
+  register struct self_context* ctx __asm ("r14");
   int is_unsigned = ctx && is_fake_self(ctx);
+
   if (is_unsigned)
   {
     *(int*)(response + 0x04) = 0; /* setting error field to zero, thus we have no errors */
@@ -331,8 +329,8 @@ PAYLOAD_CODE int my_sceSblAuthMgrSmLoadSelfSegment__sceSblServiceMailbox(unsigne
 
 PAYLOAD_CODE int my_sceSblAuthMgrSmLoadSelfBlock__sceSblServiceMailbox(unsigned long service_id, uint8_t* request, void* response)
 {
-  struct self_context* ctx;
-  register struct self_context* ctx_reg __asm__("r14");
+  uint8_t* frame = (uint8_t*)__builtin_frame_address(1);
+  struct self_context* ctx = *(struct self_context**)(frame - 0x1C8);
   vm_offset_t segment_data_gpu_va = *(unsigned long*)(request + 0x08);
   vm_offset_t cur_data_gpu_va = *(unsigned long*)(request + 0x50);
   vm_offset_t cur_data2_gpu_va = *(unsigned long*)(request + 0x58);
@@ -340,8 +338,6 @@ PAYLOAD_CODE int my_sceSblAuthMgrSmLoadSelfBlock__sceSblServiceMailbox(unsigned 
   unsigned int data_size = *(unsigned int*)(request + 0x48);
   vm_offset_t segment_data_cpu_va, cur_data_cpu_va, cur_data2_cpu_va;
   unsigned int size1;
-
-  ctx = ctx_reg;
 
   int is_unsigned = ctx && (ctx->format == SELF_FORMAT_ELF || is_fake_self(ctx));
   int result;

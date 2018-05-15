@@ -8,21 +8,23 @@
 #define TYPE_SBL_KEY_RBTREE_ENTRY_LOCKED_OFFSET 0x80
 #define SIZEOF_SBL_KEY_DESC 0x7C // sceSblKeymgrSetKey
 #define SBL_MSG_SERVICE_MAILBOX_MAX_SIZE 0x80
+#define SBL_MSG_CCP 0x8
 
 struct sbl_mapped_page_group;
 
-union sbl_key_desc
-{
-  struct
-  {
-    uint16_t cmd;
-    uint16_t pad;
-    uint8_t key[0x20];
-    uint8_t seed[0x10];
+union sbl_key_desc {
+  struct {
+    uint16_t obf_key_id;
+    uint16_t key_size;
+    uint8_t escrowed_key[0x20];
   } pfs;
+  struct {
+      uint16_t cmd;
+      uint16_t pad;
+      uint16_t key_id;
+  } portability;
   uint8_t raw[SIZEOF_SBL_KEY_DESC];
 };
-
 TYPE_CHECK_SIZE(union sbl_key_desc, SIZEOF_SBL_KEY_DESC);
 
 TYPE_BEGIN(struct sbl_key_rbtree_entry, SIZEOF_SBL_KEY_RBTREE_ENTRY);

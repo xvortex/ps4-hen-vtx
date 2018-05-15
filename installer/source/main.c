@@ -7,11 +7,17 @@
 #define PS4_UPDATE_FULL_PATH "/update/PS4UPDATE.PUP"
 #define PS4_UPDATE_TEMP_PATH "/update/PS4UPDATE.PUP.net.temp"
 
-#define	KERN_XFAST_SYSCALL	0x3095D0	// 4.55
-#define KERN_PRISON_0		0x10399B0
-#define KERN_ROOTVNODE		0x21AFA30
+#define	KERN_XFAST_SYSCALL	0x1C0		// 5.01
+#define KERN_PRISON_0		0x10986A0
+#define KERN_ROOTVNODE		0x22C19F0
 
-#define DT_HASH_SEGMENT		0xB1D820
+#define KERN_PMAP_PROTECT	0x2E2D00
+#define KERN_PMAP_PROTECT_P	0x2E2D44
+#define KERN_PMAP_STORE		0x22CB4F0
+
+#define KERN_REGMGR_SETINT	0x4F8940
+
+#define DT_HASH_SEGMENT		0xB5EE20
 
 extern char kpayload[];
 unsigned kpayload_size;
@@ -24,8 +30,8 @@ int install_payload(struct thread *td, struct install_payload_args* args)
 
   uint8_t* kernel_base = (uint8_t*)(__readmsr(0xC0000082) - KERN_XFAST_SYSCALL);
 
-  void (*pmap_protect)(void * pmap, uint64_t sva, uint64_t eva, uint8_t pr) = (void *)(kernel_base + 0x420310);
-  void *kernel_pmap_store = (void *)(kernel_base + 0x21BCC38);
+  void (*pmap_protect)(void * pmap, uint64_t sva, uint64_t eva, uint8_t pr) = (void *)(kernel_base + KERN_PMAP_PROTECT);
+  void *kernel_pmap_store = (void *)(kernel_base + KERN_PMAP_STORE);
 
   kernel_printf("\n\n\n\npayload_installer: starting\n");
   kernel_printf("payload_installer: kernel base=%lx\n", kernel_base);
@@ -67,9 +73,9 @@ int install_payload(struct thread *td, struct install_payload_args* args)
   kernel_printf("payload_installer: remap\n");
   uint64_t sss = ((uint64_t)payload_buffer) & ~(uint64_t)(PAGE_SIZE-1);
   uint64_t eee = ((uint64_t)payload_buffer + payload_size + PAGE_SIZE - 1) & ~(uint64_t)(PAGE_SIZE-1);
-  kernel_base[0x420354] = 0xEB;
+  kernel_base[KERN_PMAP_PROTECT_P] = 0xEB;
   pmap_protect(kernel_pmap_store, sss, eee, 7);
-  kernel_base[0x420354] = 0x75;
+  kernel_base[KERN_PMAP_PROTECT_P] = 0x75;
 
   kernel_printf("payload_installer: patching payload pointers\n");
   if (payload_header->real_info_offset != 0 &&
@@ -141,7 +147,7 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   struct ucred* cred;
   struct filedesc* fd;
 
-  uint64_t (*sceRegMgrSetInt)(uint32_t regId, int value);
+  uint64_t (*sceRegMgrSetInt)(uint32_t regId, int value, int unk1, int unk2, int unk3);
 
   fd = td->td_proc->p_fd;
   cred = td->td_proc->p_ucred;
@@ -150,7 +156,7 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   uint8_t* kernel_ptr = (uint8_t*)kernel_base;
   void** got_prison0 =   (void**)&kernel_ptr[KERN_PRISON_0];
   void** got_rootvnode = (void**)&kernel_ptr[KERN_ROOTVNODE];
-  *(void**)(&sceRegMgrSetInt) = &kernel_ptr[0x4D6F00];
+  *(void**)(&sceRegMgrSetInt) = &kernel_ptr[KERN_REGMGR_SETINT];
 
   cred->cr_uid = 0;
   cred->cr_ruid = 0;
@@ -176,27 +182,32 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   *sceProcCap = 0xffffffffffffffff; // Sce Process
 
   // enable permanent Internet Web Browser
-  sceRegMgrSetInt(0x3C040000, 0);
+  sceRegMgrSetInt(0x3C040000, 0, 0, 0, 0);
   
   // Disable write protection
   uint64_t cr0 = readCr0();
   writeCr0(cr0 & ~X86_CR0_WP);
 
-  // debug settings patchs
-  *(char *)(kernel_base + 0x1B6D086) |= 0x14;
-  *(char *)(kernel_base + 0x1B6D0A9) |= 3;
-  *(char *)(kernel_base + 0x1B6D0AA) |= 1;
-  *(char *)(kernel_base + 0x1B6D0C8) |= 1;	
+  // debug settings patches 5.01
+  *(char *)(kernel_base + 0x1CD0686) |= 0x14;
+  *(char *)(kernel_base + 0x1CD06A9) |= 3;
+  *(char *)(kernel_base + 0x1CD06AA) |= 1;
+  *(char *)(kernel_base + 0x1CD06C8) |= 1;
 
-  // debug menu full patches
-  *(uint32_t *)(kernel_base + 0x4D70F7) = 0;
-  *(uint32_t *)(kernel_base + 0x4D7F81) = 0;
+  // debug menu full patches 5.01
+  *(uint32_t *)(kernel_base + 0x543FB0) = 0;
+  *(uint32_t *)(kernel_base + 0x51D39A) = 0;
 
-  // flatz disable RSA signature check for PFS
-  *(uint32_t *)(kernel_base + 0x69F4E0) = 0x90C3C031;
+  // target_id patches 5.01
+  *(uint16_t *)(kernel_base + 0x1CD068C) = 0x8101;
+  *(uint16_t *)(kernel_base + 0x236B7FC) = 0x8101;
 
-  // flatz enable debug RIFs
-  *(uint64_t *)(kernel_base + 0x62D30D) = 0x3D38EB00000001B8;
+  // flatz disable pfs signature check 5.01
+  *(uint32_t *)(kernel_base + 0x6A2320) = 0x90C3C031;
+
+  // flatz enable debug RIFs 5.01
+  *(uint32_t *)(kernel_base + 0x64AED0) = 0x90C301B0;
+  *(uint32_t *)(kernel_base + 0x64AEF0) = 0x90C301B0;
 
   // Restore write protection
   writeCr0(cr0);

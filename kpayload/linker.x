@@ -20,7 +20,7 @@ SECTIONS
 	. = 0;
 	.payload_header : { *(.payload_header) } : header_seg
 	.payload_code : { *(.payload_code) } : code_seg
-	.payload_data : { *(.payload_rdata .rodata.*) } : rdata_seg
+	.payload_data : { *(.payload_rdata .rodata*) } : rdata_seg
 	.payload_data : { *(.payload_data) } : data_seg
 	.payload_bss  : { *(.payload_bss) } : bss_seg
 	. = 0x100000;
