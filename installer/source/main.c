@@ -194,7 +194,7 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   *(char *)(kernel_base + 0x1CD06AA) |= 1;
   *(char *)(kernel_base + 0x1CD06C8) |= 1;
 
-  // debug menu error patches 5.01
+ // debug menu FULL patches 5.01
   *(uint32_t *)(kernel_base + 0x4F8C78) = 0;
   *(uint32_t *)(kernel_base + 0x4F9D8C) = 0;
 
@@ -204,6 +204,9 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
 
   // flatz disable pfs signature check 5.01
   *(uint32_t *)(kernel_base + 0x6A2320) = 0x90C3C031;
+
+  //Place Holder ;)
+  *(uint32_t *)(kernel_base + 0xFFFFFFF) = 0x50532001;
 
   // flatz enable debug RIFs 5.01
   *(uint32_t *)(kernel_base + 0x64AED0) = 0x90C301B0;
@@ -215,14 +218,11 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   return 0;
 }
 
-static inline void patch_update(void)
-{
-  unlink(PS4_UPDATE_FULL_PATH);
-  unlink(PS4_UPDATE_TEMP_PATH);
+//Delete the Folder 
 
-  mkdir(PS4_UPDATE_FULL_PATH, 0777);
-  mkdir(PS4_UPDATE_TEMP_PATH, 0777);
-}
+unlink(PS4_UPDATE_FULL_PATH);
+unlink(PS4_UPDATE_TEMP_PATH);
+
 
 int _main(struct thread *td) {
   int result;
@@ -258,8 +258,13 @@ int _main(struct thread *td) {
   printfsocket("install_payload: %d\n", result);
   if (result) goto exit;
 
+  //Make Directory Folders
+
+  mkdir(PS4_UPDATE_FULL_PATH, 0777);
+  mkdir(PS4_UPDATE_TEMP_PATH, 0777);
+
   initSysUtil();
-  notify("Welcome Update Blocker and PS4HEN v"VERSION);
+  notify("Welcome to Update Blocker AND PS4HEN v"VERSION);
 
 exit:
   printfsocket("Done.\n");
