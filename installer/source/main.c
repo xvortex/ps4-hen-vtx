@@ -259,7 +259,7 @@ int _main(struct thread *td) {
   if (result) goto exit;
 
   initSysUtil();
-  notify("Welcome to PS4HEN v"VERSION);
+  notify("Welcome Update Blocker and PS4HEN v"VERSION);
 
 exit:
   printfsocket("Done.\n");
