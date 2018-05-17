@@ -182,11 +182,21 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   uint64_t cr0 = readCr0();
   writeCr0(cr0 & ~X86_CR0_WP);
 
+  //Spoofer
+  *(uint32_t *)(kernel_base + 0x144B600) = 0x5050001 ;
+  // UART Enabler
+  *(char *)(kernel_base + 0x1997BC8) = 0;
+
   // debug settings patchs
   *(char *)(kernel_base + 0x1B6D086) |= 0x14;
   *(char *)(kernel_base + 0x1B6D0A9) |= 3;
   *(char *)(kernel_base + 0x1B6D0AA) |= 1;
   *(char *)(kernel_base + 0x1B6D0C8) |= 1;	
+
+  // target_id patches for 4.55 (Spoofs to Devkit)
+  *(uint16_t *)(kernel_base + 0x1AF82C4) = 0x8101; 
+  *(uint16_t *)(kernel_base + 0X1AF85A4) = 0x8101; 
+  *(uint16_t *)(kernel_base + 0x1B6D08C) = 0x8101;
 
   // debug menu full patches
   *(uint32_t *)(kernel_base + 0x4D70F7) = 0;
@@ -198,8 +208,6 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
   // flatz enable debug RIFs
   *(uint64_t *)(kernel_base + 0x62D30D) = 0x3D38EB00000001B8;
 
-  // Restore write protection
-  writeCr0(cr0);
 
   return 0;
 }
@@ -248,7 +256,7 @@ int _main(struct thread *td) {
   if (result) goto exit;
 
   initSysUtil();
-  notify("Welcome to PS4HEN v"VERSION);
+  notify("Welcome to Update Bloacker with HEN and Target ID Spoofer v"VERSION);
 
 exit:
   printfsocket("Done.\n");
