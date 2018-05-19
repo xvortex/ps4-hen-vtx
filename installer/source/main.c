@@ -197,6 +197,9 @@ int kernel_payload(struct thread *td, struct kernel_payload_args* args)
  // debug menu FULL patches 5.01
   *(uint32_t *)(kernel_base + 0x4F8C78) = 0;
   *(uint32_t *)(kernel_base + 0x4F9D8C) = 0;
+	
+ //UART Enabler 5.05 Thanks to @DiwiDog
+ *(char *)(kernel_base + 0x09ECEB0) = 0;
 
   // target_id patches 5.01
   *(uint16_t *)(kernel_base + 0x1CD068C) = 0x8101;
