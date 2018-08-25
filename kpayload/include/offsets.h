@@ -66,6 +66,7 @@
 #define mountpfs__sceSblPfsSetKeys_hook2                          0x6AAD04
 
 // SceShellCore patches
+#define disable_screenshot_patch		0x0CB8C6
 
 // call sceKernelIsGenuineCEX
 #define sceKernelIsGenuineCEX_patch1    0x16D05B 

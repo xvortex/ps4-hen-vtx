@@ -229,6 +229,12 @@ PAYLOAD_CODE int shellcore_fpkg_patch(void)
     goto error;
   }
 
+  // never disable screenshot
+  ret = proc_write_mem(ssc, (void *)(text_seg_base + disable_screenshot_patch), 5, "\x90\x90\x90\x90\x90", &n);
+  if (ret) {
+    goto error;
+  }
+
 error:
   if (entries) {
     dealloc(entries);
