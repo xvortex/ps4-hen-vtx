@@ -190,6 +190,9 @@ int do_patch()
     // debug pkg free string
     { NULL, 0xD40F28, "free\0", 5 },
 
+    // disable screenshot patch
+    { NULL, 0xB4B0B, "\x90\x90\x90\x90\x90", 5 },
+
     { NULL, 0, NULL, 0 },
   };
 
