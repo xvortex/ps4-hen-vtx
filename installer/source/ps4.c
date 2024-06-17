@@ -1,4 +1,4 @@
-#include "ps4.h"
+#include <ps4.h>
 
 int* (*__error)();
 
@@ -17,34 +17,34 @@ SYSCALL(getFunctionAddressByName, 591);
 
 int loadModule(const char *name, int *idDestination)
 {
-  return syscall(594, name, 0, idDestination, 0);
+	return syscall(594, name, 0, idDestination, 0);
 }
 
 void initKernel(void)
 {
-  int libKernelHandle;
+	int libKernelHandle;
 
-  __error = NULL;
+	__error = NULL;
 
-  if (loadModule("libkernel.sprx", &libKernelHandle))
-    if (loadModule("libkernel_web.sprx", &libKernelHandle))
-      loadModule("libkernel_sys.sprx", &libKernelHandle);
+	if (loadModule("libkernel.sprx", &libKernelHandle))
+		if (loadModule("libkernel_web.sprx", &libKernelHandle))
+			loadModule("libkernel_sys.sprx", &libKernelHandle);
 
-  RESOLVE(libKernelHandle, __error);
-  RESOLVE(libKernelHandle, sceKernelLoadStartModule);
+	RESOLVE(libKernelHandle, __error);
+	RESOLVE(libKernelHandle, sceKernelLoadStartModule);
 }
   
 void initLibc(void)
 {
-  int libcHandle = sceKernelLoadStartModule("libSceLibcInternal.sprx", 0, NULL, 0, 0, 0);
+	int libcHandle = sceKernelLoadStartModule("libSceLibcInternal.sprx", 0, NULL, 0, 0, 0);
 
-  RESOLVE(libcHandle, memset);
-  RESOLVE(libcHandle, memcpy);
-  RESOLVE(libcHandle, sprintf);
+	RESOLVE(libcHandle, memset);
+	RESOLVE(libcHandle, memcpy);
+	RESOLVE(libcHandle, sprintf);
 }
 
 void initSysUtil(void)
 {
-  int sysUtilHandle = sceKernelLoadStartModule("/system/common/lib/libSceSysUtil.sprx", 0, NULL, 0, 0, 0);
-  RESOLVE(sysUtilHandle, sceSysUtilSendSystemNotificationWithText);
+	int sysUtilHandle = sceKernelLoadStartModule("/system/common/lib/libSceSysUtil.sprx", 0, NULL, 0, 0, 0);
+	RESOLVE(sysUtilHandle, sceSysUtilSendSystemNotificationWithText);
 }
